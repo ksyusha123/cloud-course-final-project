@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .feedback-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .feedback-textarea {
+            width: 250px;
+        }
+
+        .feedback-button {
+            width: 250px;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+        }
+    </style>
+</head>
+<body>
+<script>
+    window.onload = function(){
+        localStorage["url"] = 'https://d5d02pai4i90m809i2vu.apigw.yandexcloud.net';
+
+        const iframe = document.createElement('iframe');
+        iframe.id = 'iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        iframe.src = './package.json';
+
+        setTimeout(function(){
+            const data = JSON.parse(document.getElementById('iframe').contentDocument.body.firstChild.innerHTML);
+            document.getElementsByClassName("footer")[0].innerHTML = `<p>Web version: ${data.version}</p>`;
+
+            window.fetch(localStorage["url"] + '/info')
+                .then(response => response.json())
+                .then(data => {
+                    const appVersion = data.version;
+                    const replica = data.replica;
+                    console.log(appVersion);
+                    console.log(replica);
+                    const html = `<p>App version: ${appVersion}</p>
+                    <p>Replica: ${replica}</p>`;
+                    document.getElementsByClassName("footer")[0].innerHTML += html;
+                });
+        }, 1000);
+    }
+</script>
+<label class="feedback-panel">
+    <h2>Send us your feedback!</h2>
+    <form onsubmit="sendFeedback(this);" id="feedback-form">
+        <label>
+            Your name:
+            <input name="username" type="text">
+        </label>
+        <label>
+            Write all you want:
+            <input name="text" type="text" required="required">
+        </label>
+        <button>Send</button>
+    </form>
+    <script>
+        function sendFeedback(e) {
+            const username = e.username.value;
+            const text = e.text.value;
+            const feedback = { username, text };
+            console.log(JSON.stringify(feedback));
+            fetch(localStorage["url"] + '/feedback', {
+                method: 'POST',
+                headers: { "Content-type": "application/json" },
+                body: JSON.stringify(feedback)
+            }).then(() => {
+                console.log("New feedback added");
+                window.location.href='index.html';
+            });
+        }
+    </script>
+</label>
+<div class="comments-list"></div>
+<script>
+    window.fetch(localStorage["url"] + "/feedback",
+        { method: 'GET'})
+        .then( response => response.json())
+        .then(data => {
+            console.log(data);
+            let html = '';
+            for (let i = 0; i < data.length; i++){
+                const item = data[i];
+                html += `<div class=\"comment\" id="${item.id}">
+                    <h3>${item.username}</h3>
+                    <p>${item.text}</p>
+                    <p>${new Date(item.datetime).toDateString()}</p>
+                    </div>`;
+            }
+            document.getElementsByClassName("comments-list")[0].innerHTML = html;
+        });
+</script>
+</body>
+<footer class="footer">
+</footer>
+</html>

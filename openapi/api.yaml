@@ -1,0 +1,133 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Feedback project API
+x-yc-apigateway:
+  service_account_id: <service_account_id>
+
+paths:
+  /{file+}:
+    options:
+      parameters:
+        - name: file
+          in: path
+          description: greedy param
+          required: false
+          schema:
+            type: string
+      description: Greedy options
+      operationId: greedyOptions
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 200
+        content:
+          "*": ""
+        http_headers:
+          Allow: OPTIONS, GET, HEAD, POST, DELETE, PUT
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Headers: Content-Type
+  /info:
+    get:
+      description: app version and call counter
+      operationId: apiInfo
+      responses:
+        '200':
+          description: app version and call counter
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Info"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-yc-apigateway-integration:
+        type: serverless_containers
+        container_id: <container_id>
+  /feedback:
+    get:
+      description: Returns all feedback comments
+      operationId: getFeedback
+      responses:
+        '200':
+          description: all feedback comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-yc-apigateway-integration:
+        type: serverless_containers
+        container_id: <container_id>
+    post:
+      description: Post the feedback
+      operationId: postFeedback
+      requestBody:
+        description: Feedback comment to post
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+      responses:
+        '200':
+          description: feedback comment response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-yc-apigateway-integration:
+        type: serverless_containers
+        container_id: <container_id>
+
+   
+components:
+  schemas:
+    Comment:
+      type: object
+      required:
+        - username
+        - text
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        text:
+          type: string
+        datetime:
+          type: string
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+
+    Info:
+      required:
+      - version
+      - replica
+      type: object
+      properties:
+        version:
+          type: string
+        replica:
+          type: string
